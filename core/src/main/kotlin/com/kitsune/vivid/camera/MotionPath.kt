@@ -25,7 +25,7 @@ class MotionPath private constructor() {
 
     }
 
-    fun linearPan(target: Location, ticks: Int): MotionPath {
+    fun interpolate (target: Location, ticks: Int, type: Interpolation): MotionPath {
         val future = CompletableFuture<Void>()
 
         path.add { camera ->
@@ -35,12 +35,8 @@ class MotionPath private constructor() {
 
             object : BukkitRunnable() {
 
-                val motionVector =
-                    target.toVector().subtract(camera.location.toVector()).divide(Vector(ticks, ticks, ticks))
-                val yawMotion = (target.yaw - camera.location.yaw) / ticks
-                val pitchMotion = (target.pitch - camera.location.pitch) / ticks
-
-                var timer = 0
+                var tickCount = 0.0
+                val start = camera.location
 
                 override fun run() {
 
@@ -51,15 +47,16 @@ class MotionPath private constructor() {
                         return
                     }
 
-                    // compute new location
-                    camera.location.add(motionVector)
-                    camera.location.yaw += yawMotion
-                    camera.location.pitch += pitchMotion
+                    val amount = tickCount++/ticks
 
-                    // update location
+                    // compute new location
+                    camera.location.add(type.apply(start.toVector(), target.toVector(), amount))
+                    camera.location.yaw += type.apply(start.yaw, target.yaw, amount)
+                    camera.location.pitch += type.apply(start.pitch, target.pitch, amount)
+
                     camera.entity.teleport(camera.location)
 
-                    if (++timer >= ticks) {
+                    if (amount >= 1.0) {
 
                         // reset state
                         camera.state = Camera.State.WAITING
@@ -68,12 +65,17 @@ class MotionPath private constructor() {
                         future.complete(null)
                     }
                 }
+
             }.runTaskTimer(camera.plugin, 0, 1)
 
             future
         }
 
         return this
+    }
+
+    fun linearPan(target: Location, ticks: Int): MotionPath {
+        return interpolate(target, ticks, Interpolation.LINEAR)
     }
 
     fun wait(ticks: Long): MotionPath {

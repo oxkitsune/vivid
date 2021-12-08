@@ -2,6 +2,7 @@ package com.kitsune.example
 
 import com.kitsune.vivid.camera.Camera
 import com.kitsune.vivid.camera.MotionPath
+import com.kitsune.vivid.camera.Interpolation
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.TitlePart
@@ -28,6 +29,7 @@ class ExamplePlugin : JavaPlugin(), Listener {
         MotionPath.begin()
             .linearPan(start.clone().add(10.0, 10.0, 0.0), 80) // linearly pan to new location
             .wait(80) // wait 80 ticks
+            .interpolate(start.clone().add(100.0, 10.0, 0.0), 100, Interpolation.SQUARED) // use a different interpolation function
             .switchPosition(start.clone().add(5.0, 0.0, 5.0)) // switch the position of the camera
             .forEachViewer { viewer ->
 

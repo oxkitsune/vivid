@@ -57,5 +57,4 @@ class InterpolationTest {
             "Linear Interpolation failed for vector!"
         )
     }
-
 }
