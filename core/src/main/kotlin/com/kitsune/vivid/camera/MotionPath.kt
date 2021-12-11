@@ -1,5 +1,6 @@
 package com.kitsune.vivid.camera
 
+import io.netty.util.concurrent.CompleteFuture
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -116,6 +117,42 @@ class MotionPath private constructor() {
 
         path.add { camera ->
             camera.switchPosition(location)
+            CompletableFuture.completedFuture(null)
+        }
+
+        return this
+    }
+
+    /**
+     * Run the specified lambda function at the current time, while executing the path
+     *
+     * @param function the function to invoke
+     *
+     * @return this motion path
+     */
+    fun run (function: (Camera) -> Unit): MotionPath {
+
+        // run the specified function
+        path.add { camera ->
+            function.invoke(camera)
+            CompletableFuture.completedFuture(null)
+        }
+
+        return this
+    }
+
+    /**
+     * Run the specified lambda function at the current time, while executing the path
+     *
+     * @param function the function to invoke
+     *
+     * @return this motion path
+     */
+    fun run (function: () -> Unit): MotionPath {
+
+        // run the specified function
+        path.add {
+            function.invoke()
             CompletableFuture.completedFuture(null)
         }
 
