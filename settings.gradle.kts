@@ -11,5 +11,4 @@ pluginManagement {
     }
 }
 
-include("core", "kotlin-example")
-include("java-example")
+include("core", "kotlin-example", "java-example")

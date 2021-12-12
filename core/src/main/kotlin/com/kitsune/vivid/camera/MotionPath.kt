@@ -1,11 +1,9 @@
 package com.kitsune.vivid.camera
 
-import io.netty.util.concurrent.CompleteFuture
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.util.Vector
 import java.util.concurrent.CompletableFuture
 
 class MotionPath private constructor() {

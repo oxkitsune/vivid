@@ -18,7 +18,3 @@ allprojects {
         maven("https://papermc.io/repo/repository/maven-public/")
     }
 }
-
-subprojects {
-    apply(plugin = "io.papermc.paperweight.userdev")
-}
