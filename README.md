@@ -1,5 +1,5 @@
 # vivid
- a framework to build good-looking cut scenes in minecraft
+a framework to build good-looking cut scenes in minecraft
 
 
 ## How to use
@@ -7,7 +7,7 @@
 ### Gradle
 
 #### Kotlin/DSL:
-```kotlin
+```kt
 repositories {
     maven("https://maven.kitsune.software/repositories/snapshots/")
 }
@@ -23,7 +23,7 @@ repositories {
     }
 }
 
-implementation 'com.kitsune.vivid:core:1.0-SNAPSHOT'
+implementation group: 'com.kitsune.vivid', name: 'core', version: '1.0-SNAPSHOT'
 ```
 
 ### Maven
