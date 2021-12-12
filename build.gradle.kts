@@ -6,7 +6,7 @@ plugins {
 allprojects {
 
     group = "com.kitsune.vivid"
-    version = "1.0"
+    version = "1.0-SNAPSHOT"
 
 
     repositories {
