@@ -1,8 +1,8 @@
 package com.kitsune.example
 
 import com.kitsune.vivid.camera.Camera
-import com.kitsune.vivid.camera.MotionPath
 import com.kitsune.vivid.camera.Interpolation
+import com.kitsune.vivid.camera.MotionPath
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.TitlePart

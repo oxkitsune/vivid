@@ -62,7 +62,7 @@ class Camera(internal val location: Location, internal val plugin: Plugin) : Lis
      *
      * @param newLocation the new location of the [Camera]
      */
-    internal fun switchPosition(newLocation: Location): Camera {
+    fun switchPosition(newLocation: Location): Camera {
         val newCamera = createCameraEntity(newLocation)
 
         // update location
