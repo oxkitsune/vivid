@@ -49,7 +49,11 @@ class Camera(internal val location: Location, internal val plugin: Plugin) : Lis
         state = State.DESTROYED
 
         viewers.forEach {
-            it.spectatorTarget = null
+
+            if (it.gameMode == GameMode.SPECTATOR) {
+                it.spectatorTarget = null
+            }
+
             it.gameMode = gameMode
         }
 

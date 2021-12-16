@@ -6,6 +6,7 @@ import kotlin.Unit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -30,22 +31,17 @@ public class ExamplePlugin extends JavaPlugin implements Listener {
         var camera = new Camera(player.getEyeLocation(), this);
         var start = player.getEyeLocation().clone();
 
+        // set the pitch and yaw
+        start.setPitch(90);
+        start.setYaw(90);
+
         // add player to camera
         camera.addViewer(player);
 
         // create camera motion path
         MotionPath
                 .begin()
-                .run(() -> {
-
-                    // set the pitch and yaw
-                    start.setPitch(90);
-                    start.setYaw(90);
-
-                    // return Unit.INSTANCE, as we don't have Unit in Java
-                    return Unit.INSTANCE;
-                })
-                .linearPan(start.add(0d, 10d, 0d), 100)
+                .linearPan(start.clone().add(0d, 10d, 0d), 30)
                 .forEachViewer(viewer -> {
 
                     // send this message to each viewer
@@ -54,7 +50,16 @@ public class ExamplePlugin extends JavaPlugin implements Listener {
                     // return Unit.INSTANCE, as we don't have Unit in Java
                     return Unit.INSTANCE;
                 })
-                .start(camera); // start the motion
+                .start(camera)// start the motion
+                .thenAccept(v -> {
+                    camera.destroy(GameMode.CREATIVE);
+                })
+                .exceptionally(ex -> {
+
+                    // destroy camera if smth goes wrong
+                    camera.destroy(GameMode.CREATIVE);
+                    return null;
+                });
 
     }
 }

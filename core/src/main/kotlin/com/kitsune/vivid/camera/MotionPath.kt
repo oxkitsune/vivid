@@ -29,8 +29,8 @@ class MotionPath private constructor() {
 
     }
 
-    fun interpolate (target: Location, ticks: Int, type: Interpolation): MotionPath {
-        val future = CompletableFuture<Void>()
+    fun interpolate(target: Location, ticks: Int, type: Interpolation): MotionPath {
+        val future = CompletableFuture<Camera>()
 
         path.add { camera ->
 
@@ -39,8 +39,8 @@ class MotionPath private constructor() {
 
             object : BukkitRunnable() {
 
-                var tickCount = 0.0
-                val start = camera.location
+                var tickCount = 0
+                val start = camera.location.clone()
 
                 override fun run() {
 
@@ -51,12 +51,14 @@ class MotionPath private constructor() {
                         return
                     }
 
-                    val amount = tickCount++/ticks
+                    val amount = tickCount++ / ticks.toDouble()
 
                     // compute new location
-                    camera.location.add(type.apply(start.toVector(), target.toVector(), amount))
-                    camera.location.yaw += type.apply(start.yaw, target.yaw, amount)
-                    camera.location.pitch += type.apply(start.pitch, target.pitch, amount)
+                    camera.location.x = type.apply(start.x, target.x, amount)
+                    camera.location.y = type.apply(start.y, target.y, amount)
+                    camera.location.z = type.apply(start.z, target.z, amount)
+                    camera.location.yaw = type.apply(start.yaw, target.yaw, amount)
+                    camera.location.pitch = type.apply(start.pitch, target.pitch, amount)
 
                     camera.entity.teleport(camera.location)
 
@@ -66,7 +68,7 @@ class MotionPath private constructor() {
                         camera.state = Camera.State.WAITING
                         cancel()
 
-                        future.complete(null)
+                        future.complete(camera)
                     }
                 }
 
@@ -82,13 +84,13 @@ class MotionPath private constructor() {
         return interpolate(target, ticks, Interpolation.LINEAR)
     }
 
-    fun panAround (target: Location, radius: Double, height: Double = 0.0, ticks: Int, delay: Long = 0): MotionPath {
-        val future = CompletableFuture<Void>()
+    fun panAround(target: Location, radius: Double, height: Double = 0.0, ticks: Int, delay: Long = 0): MotionPath {
+        val future = CompletableFuture<Camera>()
 
         path.add { camera ->
             camera.state = Camera.State.BUSY
 
-            object : BukkitRunnable () {
+            object : BukkitRunnable() {
 
                 val stepSize = (2 * PI) / ticks
                 var theta = 0.0
@@ -123,9 +125,8 @@ class MotionPath private constructor() {
                         // reset state
                         camera.state = Camera.State.WAITING
 
-                        future.complete(null)
+                        future.complete(camera)
                         cancel()
-
                     }
                 }
 
@@ -139,7 +140,7 @@ class MotionPath private constructor() {
     }
 
     fun wait(ticks: Long): MotionPath {
-        val future = CompletableFuture<Void>()
+        val future = CompletableFuture<Camera>()
 
         path.add { camera ->
 
@@ -154,7 +155,7 @@ class MotionPath private constructor() {
                 }
 
                 camera.state = Camera.State.WAITING
-                future.complete(null)
+                future.complete(camera)
 
             }, ticks)
             future
@@ -166,7 +167,7 @@ class MotionPath private constructor() {
     fun forEachViewer(function: (Player) -> Unit): MotionPath {
         path.add { camera ->
             camera.viewers.forEach { function.invoke(it) }
-            CompletableFuture.completedFuture(null)
+            CompletableFuture.completedFuture(camera)
         }
 
         return this
@@ -176,7 +177,7 @@ class MotionPath private constructor() {
 
         path.add { camera ->
             camera.switchPosition(location)
-            CompletableFuture.completedFuture(null)
+            CompletableFuture.completedFuture(camera)
         }
 
         return this
@@ -189,23 +190,41 @@ class MotionPath private constructor() {
      *
      * @return this motion path
      */
-    fun run (function: () -> Unit): MotionPath {
+    fun run(function: () -> Unit): MotionPath {
 
         // run the specified function
         path.add {
             function.invoke()
-            CompletableFuture.completedFuture(null)
+            CompletableFuture.completedFuture(it)
         }
 
         return this
     }
 
-    fun start(camera: Camera): CompletableFuture<Void> {
+    /**
+     * Start the motion path with the specified [Camera]
+     *
+     * @param camera the camera to start the motion path for!
+     *
+     * @return a [CompletableFuture] that will complete once the path has completed!
+     */
+    fun start(camera: Camera): CompletableFuture<Camera> {
+
+        // make sure to check the state
+        if (camera.state != Camera.State.WAITING) {
+            return CompletableFuture.failedFuture(IllegalStateException("That camera is not ready to play an animation!"))
+        }
 
         // run each future, in sequence
-        var current: CompletableFuture<Void> = CompletableFuture.completedFuture(null)
+        var current: CompletableFuture<Camera> = CompletableFuture.completedFuture(camera)
+
         path.forEach { motion ->
-            current = current.thenCompose { motion.play(camera) }
+            current = current.thenCompose {
+                motion.play(it).exceptionally { exception ->
+                    current.completeExceptionally(exception)
+                    return@exceptionally null
+                }
+            }
         }
 
         return current

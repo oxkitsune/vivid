@@ -22,6 +22,7 @@ tasks.build {
 
 bukkit {
     load = BukkitPluginDescription.PluginLoadOrder.STARTUP
+    name = "Example"
     main = "com.kitsune.example.ExamplePlugin"
     apiVersion = "1.13"
 }
