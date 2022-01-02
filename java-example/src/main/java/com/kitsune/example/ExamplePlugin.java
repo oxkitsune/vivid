@@ -1,7 +1,9 @@
 package com.kitsune.example;
 
 import com.kitsune.vivid.camera.Camera;
-import com.kitsune.vivid.camera.MotionPath;
+import com.kitsune.vivid.camera.properties.CameraProperties;
+import com.kitsune.vivid.camera.properties.DefaultProperties;
+import com.kitsune.vivid.motion.MotionPath;
 import kotlin.Unit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -28,7 +30,10 @@ public class ExamplePlugin extends JavaPlugin implements Listener {
         if (event.isSneaking()) return;
 
         var player = event.getPlayer();
-        var camera = new Camera(player.getEyeLocation(), this);
+        var camera = new Camera.Builder(this)
+                .location(player.getEyeLocation())
+                .disconnectHandler(DefaultProperties.DisconnectHandlers.REJOIN)
+                .build();
         var start = player.getEyeLocation().clone();
 
         // set the pitch and yaw

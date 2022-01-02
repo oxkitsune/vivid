@@ -1,5 +1,6 @@
 package com.kitsune.vivid.camera
 
+import com.kitsune.vivid.motion.Interpolation
 import org.bukkit.util.Vector
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

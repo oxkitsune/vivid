@@ -1,29 +1,25 @@
 package com.kitsune.vivid.camera
 
-import com.destroystokyo.paper.event.player.PlayerStopSpectatingEntityEvent
-import org.bukkit.Bukkit
+import com.kitsune.vivid.camera.properties.CameraProperties
+import com.kitsune.vivid.camera.properties.DisconnectHandler
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.entity.Bat
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
 import org.bukkit.event.HandlerList
-import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
 
-class Camera(internal val location: Location, internal val plugin: Plugin) : Listener {
+class Camera private constructor(
+    val properties: CameraProperties,
+    internal val location: Location,
+    internal val plugin: Plugin
+) {
 
     internal var entity: Bat = createCameraEntity(location)
     internal val viewers: MutableList<Player> = ArrayList()
     internal var state = State.WAITING
-
-    init {
-
-        // register listener
-        Bukkit.getPluginManager().registerEvents(this, plugin)
-    }
+    private val listener = CameraListener(this, plugin)
 
     /**
      * Add a viewer to this [Camera].
@@ -38,6 +34,34 @@ class Camera(internal val location: Location, internal val plugin: Plugin) : Lis
         player.gameMode = GameMode.SPECTATOR
         player.spectatorTarget = entity
     }
+
+    /**
+     * Remove a viewer from this [Camera].
+     * This will set the [Player]'s [GameMode] to the [GameMode] specified, and teleport
+     * the player to the [Location] specified!
+     *
+     * @param player the viewer to remove
+     * @param location the location to teleport the player to
+     * @param gameMode the [GameMode] the viewer will be set to
+     */
+    fun removeViewer(player: Player, location: Location = entity.location, gameMode: GameMode = GameMode.SURVIVAL) {
+        check(viewers.contains(player)) { "${player.name} is not a viewer of this camera!" }
+
+        viewers.remove(player)
+
+        // reset the player's spectator state
+        player.spectatorTarget = null
+        player.gameMode = gameMode
+    }
+
+    /**
+     * Check if the specified [Player] is viewer of this [Camera]
+     *
+     * @param player the player to check
+     *
+     * @return `true` if the player is a viewer or else `false`
+     */
+    fun isViewer (player: Player): Boolean = viewers.contains(player)
 
     /**
      * Destroys the [Camera] and sets all the viewers to the specified [GameMode]
@@ -58,8 +82,13 @@ class Camera(internal val location: Location, internal val plugin: Plugin) : Lis
         }
 
         entity.remove()
-        HandlerList.unregisterAll(this)
+        HandlerList.unregisterAll(listener)
     }
+
+    /**
+     * Get whether this [Camera] has been destroyed
+     */
+    fun isDestroyed() = state == State.DESTROYED
 
     /**
      * Switch the position of the [Camera]
@@ -83,15 +112,6 @@ class Camera(internal val location: Location, internal val plugin: Plugin) : Lis
         return this
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    private fun onSpectatorTargetSwitchEvent(event: PlayerStopSpectatingEntityEvent) {
-        if (state == State.DESTROYED) return
-        if (event.spectatorTarget.uniqueId != entity.uniqueId) return
-        if (!viewers.contains(event.player)) return
-
-        event.isCancelled = true
-    }
-
     /**
      * Create a new [Camera] entity at the specified [Location]
      *
@@ -112,6 +132,25 @@ class Camera(internal val location: Location, internal val plugin: Plugin) : Lis
         return entity
     }
 
+    data class Builder(
+        private val plugin: Plugin,
+        private var location: Location? = null,
+        private val properties: CameraProperties = CameraProperties()
+    ) {
+
+        constructor(plugin: Plugin) : this(plugin, null, CameraProperties())
+
+        fun location(location: Location) = apply { this.location = location }
+
+        fun disconnectHandler(disconnectHandler: DisconnectHandler) =
+            apply { this.properties.disconnectHandler = disconnectHandler }
+
+        fun build() = Camera(properties, location!!, plugin)
+    }
+
+    /**
+     * The state of the [Camera]
+     */
     enum class State {
         WAITING,
         BUSY,

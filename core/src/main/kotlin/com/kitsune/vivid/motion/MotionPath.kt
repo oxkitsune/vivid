@@ -1,5 +1,6 @@
-package com.kitsune.vivid.camera
+package com.kitsune.vivid.motion
 
+import com.kitsune.vivid.camera.Camera
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -13,7 +14,7 @@ import kotlin.math.sin
 
 class MotionPath private constructor() {
 
-    private val path: MutableList<CameraMotion> = ArrayList()
+    private val path: MutableList<(Camera) -> CompletableFuture<Camera>> = ArrayList()
 
     companion object {
 
@@ -45,7 +46,7 @@ class MotionPath private constructor() {
                 override fun run() {
 
                     // stop if destroyed
-                    if (camera.state == Camera.State.DESTROYED) {
+                    if (camera.isDestroyed()) {
                         future.completeExceptionally(InterruptedException("Camera got destroyed!"))
                         cancel()
                         return
@@ -98,7 +99,7 @@ class MotionPath private constructor() {
                 override fun run() {
 
                     // stop if destroyed
-                    if (camera.state == Camera.State.DESTROYED) {
+                    if (camera.isDestroyed()) {
                         future.completeExceptionally(InterruptedException("Camera got destroyed!"))
                         return
                     }
@@ -149,7 +150,7 @@ class MotionPath private constructor() {
             Bukkit.getScheduler().runTaskLater(camera.plugin, Runnable {
 
                 // stop if destroyed
-                if (camera.state == Camera.State.DESTROYED) {
+                if (camera.isDestroyed()) {
                     future.completeExceptionally(InterruptedException("Camera got destroyed!"))
                     return@Runnable
                 }
@@ -220,7 +221,7 @@ class MotionPath private constructor() {
 
         path.forEach { motion ->
             current = current.thenCompose {
-                motion.play(it).exceptionally { exception ->
+                motion.invoke(it).exceptionally { exception ->
                     current.completeExceptionally(exception)
                     return@exceptionally null
                 }

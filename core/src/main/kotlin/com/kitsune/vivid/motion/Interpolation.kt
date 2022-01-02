@@ -1,4 +1,4 @@
-package com.kitsune.vivid.camera
+package com.kitsune.vivid.motion
 
 import org.bukkit.util.Vector
 

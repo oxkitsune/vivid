@@ -1,8 +1,8 @@
 package com.kitsune.example
 
 import com.kitsune.vivid.camera.Camera
-import com.kitsune.vivid.camera.Interpolation
-import com.kitsune.vivid.camera.MotionPath
+import com.kitsune.vivid.motion.Interpolation
+import com.kitsune.vivid.motion.MotionPath
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.TitlePart
@@ -20,7 +20,9 @@ class ExamplePlugin : JavaPlugin(), Listener {
     @EventHandler
     fun onPlayerJoinEvent(event: PlayerJoinEvent) {
 
-        val camera = Camera(event.player.eyeLocation, this)
+        val camera = Camera.Builder(this)
+            .location(event.player.eyeLocation)
+            .build()
         val start = event.player.eyeLocation.clone()
 
         // add the player as viewer of the camera
